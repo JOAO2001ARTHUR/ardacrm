@@ -4,7 +4,7 @@ import { encrypt } from '@/lib/whatsapp/encryption';
 
 export async function POST(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     // 1. Trocar o 'code' pelo Access Token da Meta
     const tokenUrl = new URL('https://graph.facebook.com/v20.0/oauth/access_token');
-    tokenUrl.searchParams.append('client_id', process.env.META_APP_ID || '');
+    tokenUrl.searchParams.append('client_id', (process.env.META_APP_ID || process.env.NEXT_PUBLIC_META_APP_ID) || '');
     tokenUrl.searchParams.append('client_secret', process.env.META_APP_SECRET || '');
     tokenUrl.searchParams.append('code', code);
     
@@ -35,14 +35,22 @@ export async function POST(request: Request) {
 
     const accessToken = tokenData.access_token;
 
-    // 2. Buscar as Contas de WhatsApp (WABA) liberadas pelo cliente
-    const wabaRes = await fetch(`https://graph.facebook.com/v20.0/me/client_whatsapp_business_accounts?access_token=${accessToken}`);
-    const wabaData = await wabaRes.json();
+        // 2. Extrair o WABA ID do token usando debug_token (Recomendado para Embedded Signup)
+    const appToken = `${(process.env.META_APP_ID || process.env.NEXT_PUBLIC_META_APP_ID)}|${process.env.META_APP_SECRET}`;
+    const debugRes = await fetch(`https://graph.facebook.com/v20.0/debug_token?input_token=${accessToken}&access_token=${appToken}`);
+    const debugData = await debugRes.json();
     
-    if (!wabaData.data || wabaData.data.length === 0) {
+    let wabaId = null;
+    if (debugData.data && debugData.data.granular_scopes) {
+      const waScope = debugData.data.granular_scopes.find((s: any) => s.scope === 'whatsapp_business_management' || s.scope === 'whatsapp_business_messaging');
+      if (waScope && waScope.target_ids && waScope.target_ids.length > 0) {
+        wabaId = waScope.target_ids[0];
+      }
+    }
+
+    if (!wabaId) {
       return NextResponse.json({ error: 'Nenhuma Conta do WhatsApp Business encontrada.' }, { status: 404 });
     }
-    const wabaId = wabaData.data[0].id;
 
     // 3. Buscar o ID do Número de Telefone vinculado ao WABA
     const phoneRes = await fetch(`https://graph.facebook.com/v20.0/${wabaId}/phone_numbers?access_token=${accessToken}`);
@@ -65,16 +73,30 @@ export async function POST(request: Request) {
     }
 
     // 5. Salvar na whatsapp_config (com o token devidamente criptografado)
+        // 5. Opcional mas recomendado: Inscrever nosso App nos Webhooks do WABA
+    try {
+      await fetch(`https://graph.facebook.com/v20.0/${wabaId}/subscribed_apps`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        }
+      });
+    } catch(e) {}
+
     const encryptedToken = encrypt(accessToken);
     const verifyToken = encrypt(`arda_${profile.account_id}`); // Token de webhook gerado automaticamente
     
     const payload = {
       account_id: profile.account_id,
+        user_id: user.id,
       phone_number_id: phoneNumberId,
       waba_id: wabaId,
-      access_token_encrypted: encryptedToken,
-      verify_token_encrypted: verifyToken,
-    };
+      access_token: encryptedToken,
+      verify_token: verifyToken,
+        status: 'connected',
+        registered_at: new Date().toISOString(),
+        subscribed_apps_at: new Date().toISOString(),
+      };
 
     const { error: upsertError } = await supabase
       .from('whatsapp_config')
@@ -94,3 +116,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Erro interno no servidor' }, { status: 500 });
   }
 }
+
+
+
+
+
+
+
+

@@ -101,20 +101,25 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
+      </head>
+      <body className="min-h-full bg-background text-foreground font-sans">
         <Script
           id="theme-boot"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }}
         />
-      </head>
-      <body className="min-h-full bg-background text-foreground font-sans">
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeProvider>
             {children}
             <ThemedToaster />
           </ThemeProvider>
         </NextIntlClientProvider>
+      <Script src="https://connect.facebook.net/pt_BR/sdk.js" strategy="beforeInteractive" />
       </body>
     </html>
   );
 }
+
+
+
+
