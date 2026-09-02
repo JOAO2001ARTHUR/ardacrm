@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import Script from 'next/script';
 import { toast } from 'sonner';
 import {
   Eye,
@@ -105,6 +106,66 @@ export function WhatsAppConfig() {
   };
   const [registrationProbe, setRegistrationProbe] =
     useState<RegistrationProbe | null>(null);
+
+  // InÃ­cio do Embedded Signup v4
+  const [connectingFb, setConnectingFb] = useState(false);
+
+  useEffect(() => {
+    (window as any).fbAsyncInit = function() {
+      (window as any).FB.init({
+        appId      : process.env.NEXT_PUBLIC_META_APP_ID,
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v20.0'
+      });
+    };
+  }, []);
+
+  const handleConnectFacebook = () => {
+    setConnectingFb(true);
+
+    (window as any).FB.login((response: any) => {
+      if (response.authResponse && response.authResponse.code) {
+        exchangeTokenWithBackend(response.authResponse.code);
+      } else {
+        toast.error('Login cancelado ou nÃ£o autorizado.');
+        setConnectingFb(false);
+      }
+    }, {
+      config_id: process.env.NEXT_PUBLIC_META_CONFIG_ID,
+      response_type: 'code', 
+      override_default_response_type: true,
+      extras: {
+        setup: {},
+        featureType: '',
+        sessionInfoVersion: '2',
+      }
+    });
+  };
+
+  const exchangeTokenWithBackend = async (oauthCode: string) => {
+    try {
+      const res = await fetch('/api/whatsapp/oauth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: oauthCode }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Falha ao vincular conta.');
+      }
+
+      toast.success('WhatsApp Business conectado com sucesso!');
+      if (accountId) fetchConfig(accountId);
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setConnectingFb(false);
+    }
+  };
+  // Fim do Embedded Signup v4
 
   const webhookUrl =
     typeof window !== 'undefined'
@@ -417,8 +478,9 @@ export function WhatsAppConfig() {
 
   if (loading) {
     return (
-      <section className="animate-in fade-in-50 duration-200">
-        <SettingsPanelHead
+    <section className="animate-in fade-in-50 duration-200">
+      <Script src="https://connect.facebook.net/en_US/sdk.js" strategy="lazyOnload" />
+      <SettingsPanelHead
           title={t("title")}
           description={t("description")}
         />
@@ -433,6 +495,7 @@ export function WhatsAppConfig() {
 
   return (
     <section className="animate-in fade-in-50 duration-200">
+      <Script src="https://connect.facebook.net/en_US/sdk.js" strategy="lazyOnload" />
       <SettingsPanelHead
         title={t("title")}
         description={t("description")}
@@ -607,92 +670,23 @@ export function WhatsAppConfig() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('phoneNumberId')}</Label>
-              <Input
-                placeholder="e.g. 100234567890123"
-                value={phoneNumberId}
-                onChange={(e) => setPhoneNumberId(e.target.value)}
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('wabaId')}</Label>
-              <Input
-                placeholder="e.g. 100234567890456"
-                value={wabaId}
-                onChange={(e) => setWabaId(e.target.value)}
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('accessToken')}</Label>
-              <div className="relative">
-                <Input
-                  type={showToken ? 'text' : 'password'}
-                  placeholder={t('accessTokenPlaceholder')}
-                  value={accessToken}
-                  onChange={(e) => {
-                    setAccessToken(e.target.value);
-                    setTokenEdited(true);
-                  }}
-                  onFocus={() => {
-                    if (accessToken === MASKED_TOKEN) {
-                      setAccessToken('');
-                      setTokenEdited(true);
-                    }
-                  }}
-                  className="bg-muted border-border text-foreground placeholder:text-muted-foreground pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowToken(!showToken)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showToken ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-              {config && !tokenEdited && (
-                <p className="text-xs text-muted-foreground">
-                  {t('tokenHidden')}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">{t('webhookVerifyToken')}</Label>
-              <Input
-                placeholder={t('webhookVerifyTokenPlaceholder')}
-                value={verifyToken}
-                onChange={(e) => setVerifyToken(e.target.value)}
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground"
-              />
-              <p className="text-xs text-muted-foreground">
-                {t('webhookVerifyTokenHint')}
+            <div className="flex flex-col items-start gap-4 p-2">
+              <p className="text-sm text-muted-foreground">
+                Ao clicar no botão abaixo, você será redirecionado para a Meta para criar ou selecionar seu número de WhatsApp Business.
               </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">
-                {t('twoStepPin')}
-                <span className="ml-1 text-muted-foreground">{t('optional')}</span>
-              </Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                placeholder={t('pinPlaceholder')}
-                value={pin}
-                onChange={(e) =>
-                  setPin(e.target.value.replace(/\D/g, '').slice(0, 6))
-                }
-                className="bg-muted border-border text-foreground placeholder:text-muted-foreground tracking-widest"
-              />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <span dangerouslySetInnerHTML={{ __html: t('pinHint') }} />
-              </p>
+              
+              <Button 
+                onClick={handleConnectFacebook} 
+                disabled={connectingFb}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {connectingFb ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Zap className="mr-2 h-4 w-4" />
+                )}
+                {connectingFb ? 'Conectando...' : 'Conectar com Facebook'}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -919,3 +913,5 @@ export function WhatsAppConfig() {
     </section>
   );
 }
+
+
