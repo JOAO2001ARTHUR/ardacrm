@@ -15,7 +15,7 @@
     "createAccount": "Criar conta"
   },
   "Sidebar": {
-    "title": "CRM para WhatsApp",
+    "title": "Arda CRM",
     "dashboard": "Painel",
     "inbox": "Atendimento",
     "notifications": "Notificações",
@@ -1689,7 +1689,7 @@
       "labelTooLong": "O rótulo precisa ter {max} caracteres ou menos",
       "copied": "Link de convite copiado",
       "clipboardBlocked": "Área de transferência bloqueada – copie o link manualmente",
-      "whatsappMessage": "Cadastre-se em {accountName} no wacrm usando este link (válido por {expiresInDays} dias): {url}"
+      "whatsappMessage": "Cadastre-se em {accountName} no Arda CRM usando este link (válido por {expiresInDays} dias): {url}"
     },
     "tagsAndFields": {
       "title": "Campos e tags",
@@ -1800,8 +1800,8 @@
       "saveResubmit": "Salvar e reenviar",
       "submitApproval": "Enviar para aprovação",
       "deleteDialogTitle": "Excluir modelo?",
-      "deleteMetaDesc": "\"{name}\" será excluído do Meta e do wacrm. As transmissões ativas que usam este modelo começarão a falhar no próximo envio. Isso não pode ser desfeito.",
-      "deleteLocalDesc": "\"{name}\" será excluído do wacrm. Ele nunca foi enviado ao Meta, portanto, nenhuma limpeza remota é necessária.",
+      "deleteMetaDesc": "\"{name}\" será excluído do Meta e do Arda CRM. As transmissões ativas que usam este modelo começarão a falhar no próximo envio. Isso não pode ser desfeito.",
+      "deleteLocalDesc": "\"{name}\" será excluído do Arda CRM. Ele nunca foi enviado ao Meta, portanto, nenhuma limpeza remota é necessária.",
       "deleting": "Excluindo…",
       "delete": "Excluir",
       "toastLoadFailed": "Falha ao carregar modelos",
@@ -1965,7 +1965,7 @@
     },
     "aiConfig": {
       "title": "Configuração do agente",
-      "description": "Traga sua própria chave OpenAI ou Antrópica. O wacrm liga para o provedor diretamente com sua chave – sem taxas de IA por assento e seus dados permanecem seus. Isso fornece respostas elaboradas por IA na caixa de entrada, no bot de resposta automática e no Playground.",
+      "description": "Traga sua própria chave OpenAI ou Antrópica. O Arda CRM liga para o provedor diretamente com sua chave – sem taxas de IA por assento e seus dados permanecem seus. Isso fornece respostas elaboradas por IA na caixa de entrada, no bot de resposta automática e no Playground.",
       "adminOnlyConfig": "Somente administradores e proprietários podem alterar a configuração do AI.",
       "loadFailed": "Falha ao carregar a configuração do AI",
       "providerAndKey": "Provedor e chave",
