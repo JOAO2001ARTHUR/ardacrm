@@ -100,6 +100,8 @@ export function WhatsAppConfig() {
   // UPDATE to admins, hence the canEditSettings gate below; without it
   // a viewer's toggle would match zero rows and appear to work.
   const [mirrorMedia, setMirrorMedia] = useState(true);
+  const [metaPhoneInfo, setMetaPhoneInfo] = useState<any>(null);
+  const [fetchingMeta, setFetchingMeta] = useState(false);
   const [savingMirror, setSavingMirror] = useState(false);
 
   // True once /register has succeeded on Meta's side (timestamp set
@@ -304,6 +306,26 @@ export function WhatsAppConfig() {
     loadedAccountIdRef.current = accountId;
     fetchConfig(accountId);
   }, [authLoading, profileLoading, user?.id, accountId, fetchConfig]);
+
+  useEffect(() => {
+    async function fetchMetaPhoneInfo() {
+      if (config?.status !== 'connected' || metaPhoneInfo || fetchingMeta)
+        return;
+      setFetchingMeta(true);
+      try {
+        const res = await fetch('/api/whatsapp/config', { method: 'GET' });
+        const data = await res.json();
+        if (data?.phone_info) {
+          setMetaPhoneInfo(data.phone_info);
+        }
+      } catch (err) {
+        console.error('Failed to fetch meta phone info', err);
+      } finally {
+        setFetchingMeta(false);
+      }
+    }
+    fetchMetaPhoneInfo();
+  }, [config?.status, metaPhoneInfo, fetchingMeta]);
 
   async function handleToggleMirrorMedia(next: boolean) {
     if (!config || !accountId || savingMirror) return;
