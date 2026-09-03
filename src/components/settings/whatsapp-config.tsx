@@ -834,28 +834,50 @@ export function WhatsAppConfig() {
                   <Label>{t('wabaId')}</Label>
                   <Input
                     type="text"
-                    value={config?.waba_id || ''}
-                    readOnly
-                    className="bg-muted text-muted-foreground font-mono text-sm"
-                    placeholder="�"
+                    value={wabaId}
+                    onChange={(e) => setWabaId(e.target.value)}
+                    className="font-mono text-sm"
+                    placeholder="Ex: 1280085397481739"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>{t('phoneNumberId')}</Label>
                   <Input
                     type="text"
-                    value={config?.phone_number_id || ''}
-                    readOnly
-                    className="bg-muted text-muted-foreground font-mono text-sm"
-                    placeholder="�"
+                    value={phoneNumberId}
+                    onChange={(e) => setPhoneNumberId(e.target.value)}
+                    className="font-mono text-sm"
+                    placeholder="Ex: 1374568655728785"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Token de Acesso (Apenas para setup manual)</Label>
+                  <Input
+                    type="password"
+                    value={accessToken}
+                    onChange={(e) => {
+                      setAccessToken(e.target.value);
+                      setTokenEdited(true);
+                    }}
+                    className="font-mono text-sm"
+                    placeholder="EAA..."
+                  />
+                  <p className="text-xs text-muted-foreground">Cole o Token de Acesso temporário ou permanente aqui.</p>
+                </div>
 
-                <div className="border-border flex items-center justify-between border-t pt-4">
+                <div className="border-border flex flex-col gap-4 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-muted-foreground flex-1 pr-4 text-sm">
-                    {t('notConnectedDesc')}
+                    Você pode configurar manualmente acima e clicar em Salvar, ou usar a conexão automática:
                   </p>
-                  <div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Salvar Manualmente
+                    </Button>
                     <Button
                       variant="outline"
                       onClick={handleConnectFacebook}
