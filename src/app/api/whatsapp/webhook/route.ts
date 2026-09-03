@@ -588,7 +588,15 @@ async function processMessage(
   // See parseMessageContent for what it turns off.
   mirrorMedia: boolean
 ) {
-  const senderPhone = normalizePhone(message.from)
+  let senderPhone = normalizePhone(message.from)
+  
+  // Normalização do 9º dígito brasileiro: se tem 12 dígitos (55 + DDD + 8 números),
+  // adiciona o 9 após o DDD para garantir a padronização com 13 dígitos e evitar
+  // falhas de envio na Allowed List do Sandbox e conversas duplicadas.
+  if (senderPhone.startsWith('55') && senderPhone.length === 12) {
+    senderPhone = `55${senderPhone.substring(2, 4)}9${senderPhone.substring(4)}`
+  }
+
   const contactName = contact.profile.name
 
   // Find or create contact
